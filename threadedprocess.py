@@ -1,3 +1,10 @@
+"""Implements ThreadedProcessPoolExecutor.
+
+A `ThreadedProcessPoolExecutor` is formed by a modified `ProcessPoolExecutor`
+that generates processes that use a `ThreadPoolExecutor` instance to run the
+given tasks.
+
+"""
 __author__ = 'Roberto Abdelkader Martínez Pérez (robertomartinezp@gmail.com)'
 
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
