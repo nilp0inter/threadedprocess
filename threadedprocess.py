@@ -46,9 +46,8 @@ def _worker(executor_reference, work_queue, available_thread):
 
 
 class _ThreadPoolExecutor(ThreadPoolExecutor):
-    def __init__(self, max_workers=None, thread_name_prefix=''):
-        super(_ThreadPoolExecutor, self).__init__(
-            max_workers, thread_name_prefix)
+    def __init__(self, max_workers=None):
+        super(_ThreadPoolExecutor, self).__init__(max_workers)
         self._available_thread = threading.Semaphore(self._max_workers)
 
     def _adjust_thread_count(self):
@@ -60,8 +59,7 @@ class _ThreadPoolExecutor(ThreadPoolExecutor):
         # idle threads than items in the work queue.
         num_threads = len(self._threads)
         if num_threads < self._max_workers:
-            thread_name = '%s_%d' % (self._thread_name_prefix or self,
-                                     num_threads)
+            thread_name = '%s_%d' % (self, num_threads)
             t = threading.Thread(name=thread_name, target=_worker,
                                  args=(weakref.ref(self, weakref_cb),
                                        self._work_queue,
@@ -82,7 +80,7 @@ def _return_result(call_item, result_queue, future):
         result_queue.put(_ResultItem(call_item.work_id, result=r))
 
 
-def _process_worker(max_threads, thread_name_prefix, call_queue, result_queue):
+def _process_worker(max_threads, call_queue, result_queue):
     """Evaluates calls from call_queue and places the results in result_queue.
 
     This worker is run in a separate process.
@@ -95,9 +93,7 @@ def _process_worker(max_threads, thread_name_prefix, call_queue, result_queue):
         shutdown: A multiprocessing.Event that will be set as a signal to the
             worker that it should exit when call_queue is empty.
     """
-    with _ThreadPoolExecutor(
-            max_workers=max_threads,
-            thread_name_prefix=thread_name_prefix) as executor:
+    with _ThreadPoolExecutor(max_workers=max_threads) as executor:
         while True:
             # Wait for the queue to be empty. Either initial state or a
             # worker got the workitem.
@@ -118,8 +114,7 @@ def _process_worker(max_threads, thread_name_prefix, call_queue, result_queue):
 
 
 class ThreadedProcessPoolExecutor(ProcessPoolExecutor):
-    def __init__(self, max_processes=None, max_threads=None,
-                 thread_name_prefix=''):
+    def __init__(self, max_processes=None, max_threads=None):
         """Initializes a new ThreadedProcessPoolExecutor instance.
 
         Args:
@@ -128,11 +123,9 @@ class ThreadedProcessPoolExecutor(ProcessPoolExecutor):
                 as the machine has processors.
             max_threads: The maximum number of thread per proces that can be
                 used to execute the given calls.
-            thread_name_prefix: An optional name prefix to give our threads.
         """
         self.max_processes = max_processes
         self.max_threads = max_threads
-        self.thread_name_prefix = thread_name_prefix
 
         super(ThreadedProcessPoolExecutor, self).__init__(
             max_workers=self.max_processes)
@@ -142,7 +135,6 @@ class ThreadedProcessPoolExecutor(ProcessPoolExecutor):
             p = multiprocessing.Process(
                     target=_process_worker,
                     args=(self.max_threads,
-                          self.thread_name_prefix,
                           self._call_queue,
                           self._result_queue))
             p.start()
