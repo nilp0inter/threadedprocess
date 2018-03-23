@@ -38,13 +38,15 @@ ThreadedProcessPoolExecutor Example
 
 .. code-block:: python
 
+   from concurrent.futures import as_completed
    import math
-   import requests
    
    from threadedprocess import ThreadedProcessPoolExecutor
+   import requests
    
    
    RNGURL = "https://www.random.org/integers/?num=1&min=1&max=100000000&col=1&base=10&format=plain&rnd=new"
+   
    
    def get_prime():
        n = int(requests.get(RNGURL).text)
@@ -58,11 +60,12 @@ ThreadedProcessPoolExecutor Example
                return (n, False)
        return (n, True)
    
-   futures = []
    
    with ThreadedProcessPoolExecutor(max_processes=4, max_threads=16) as executor:
+       futures = []
+   
        for _ in range(128):
            futures.append(executor.submit(get_prime))
    
-   for future in futures:
-       print('%d is prime: %s' % future.result())
+       for future in as_completed(futures):
+           print('%d is prime: %s' % future.result())
