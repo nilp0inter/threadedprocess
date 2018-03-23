@@ -40,7 +40,7 @@ def test_futures_run_in_different_processes_and_threads():
         for i in range(1000):
             futures.append(executor.submit(_get_pid_and_tid))
 
-    pids_and_tids = {f.result() for f in futures}
+    pids_and_tids = set((f.result() for f in futures))
 
     assert len(pids_and_tids) == 16  # 4 processes, 4 threads
 
