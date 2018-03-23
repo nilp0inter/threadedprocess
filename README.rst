@@ -19,9 +19,8 @@ pool of process with an inner pool of threads on each process to execute calls
 asynchronously.
 
 `ThreadedProcessPoolExecutor` is formed by a modified `ProcessPoolExecutor`
-that generates at most *max_processes* processes that use a
-`ThreadPoolExecutor` instance (with at most *max_threads*) to run the given
-tasks.
+that processes (with at most *max_processes*) that use a `ThreadPoolExecutor`
+instance (with at most *max_threads*) to run the given tasks.
 
 If *max_processes* is ``None`` or not given, it will default to the number
 of processors on the machine.
