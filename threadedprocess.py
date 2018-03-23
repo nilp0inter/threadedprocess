@@ -18,16 +18,19 @@ import threading
 import weakref
 
 
-def _worker(executor_reference, work_queue):
+def _worker(executor_reference, work_queue, available_thread):
     try:
         while True:
             work_item = work_queue.get(block=True)
-            work_queue.task_done()
             if work_item is not None:
                 work_item.run()
+                available_thread.release()
                 # Delete references to object. See issue16284
                 del work_item
                 continue
+            else:
+                available_thread.release()
+
             executor = executor_reference()
             # Exit if:
             #   - The interpreter is shutting down OR
@@ -43,6 +46,11 @@ def _worker(executor_reference, work_queue):
 
 
 class _ThreadPoolExecutor(ThreadPoolExecutor):
+    def __init__(self, max_workers=None, thread_name_prefix=''):
+        super(_ThreadPoolExecutor, self).__init__(
+            max_workers, thread_name_prefix)
+        self._available_thread = threading.Semaphore(self._max_workers)
+
     def _adjust_thread_count(self):
         # When the executor gets lost, the weakref callback will wake up
         # the worker threads.
@@ -56,7 +64,8 @@ class _ThreadPoolExecutor(ThreadPoolExecutor):
                                      num_threads)
             t = threading.Thread(name=thread_name, target=_worker,
                                  args=(weakref.ref(self, weakref_cb),
-                                       self._work_queue))
+                                       self._work_queue,
+                                       self._available_thread))
             t.daemon = True
             t.start()
             self._threads.add(t)
@@ -90,7 +99,11 @@ def _process_worker(max_threads, thread_name_prefix, call_queue, result_queue):
             max_workers=max_threads,
             thread_name_prefix=thread_name_prefix) as executor:
         while True:
-            executor._work_queue.join()
+            # Wait for the queue to be empty. Either initial state or a
+            # worker got the workitem.
+
+            executor._available_thread.acquire()
+
             call_item = call_queue.get(block=True)
             if call_item is None:
                 # Wake up queue management thread
