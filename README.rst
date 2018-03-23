@@ -20,7 +20,7 @@ asynchronously.
 
 `ThreadedProcessPoolExecutor` is formed by a modified `ProcessPoolExecutor`
 that generates at most *max_processes* processes that use a
-`ThreadPoolExecutor` (with at most *max_threads*) to instance to run the given
+`ThreadPoolExecutor` instance (with at most *max_threads*) to run the given
 tasks.
 
 If *max_processes* is ``None`` or not given, it will default to the number
