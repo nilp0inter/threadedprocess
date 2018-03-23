@@ -19,22 +19,23 @@ pool of process with an inner pool of threads on each process to execute calls
 asynchronously.
 
 
-.. class:: ThreadedProcessPoolExecutor(max_processes=None, max_threads=None)
+`ThreadedProcessPoolExecutor(max_processes=None, max_threads=None)`
+-------------------------------------------------------------------
 
-   An `Executor` subclass that is formed by a modified `ProcessPoolExecutor`
-   that generates at most *max_processes* processes that use a
-   `ThreadPoolExecutor` (with at most *max_threads*) to instance to run the
-   given tasks.
+An `Executor` subclass that is formed by a modified `ProcessPoolExecutor`
+that generates at most *max_processes* processes that use a
+`ThreadPoolExecutor` (with at most *max_threads*) to instance to run the
+given tasks.
 
-   If *max_processes* is ``None`` or not given, it will default to the number
-   of processors on the machine.
+If *max_processes* is ``None`` or not given, it will default to the number
+of processors on the machine.
 
-   If *max_threads* is ``None`` or not given, it will default to the number of
-   processors on the machine, multiplied by ``5``.
+If *max_threads* is ``None`` or not given, it will default to the number of
+processors on the machine, multiplied by ``5``.
 
 
 ThreadedProcessPoolExecutor Example
------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
