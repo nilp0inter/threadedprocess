@@ -12,7 +12,7 @@ def _get_pid_and_tid():
     return (os.getpid(), threading.current_thread().ident)
 
 
-def _long_running_task():
+def _long_running_task(*_):
     start = time.time()
     time.sleep(1)
     end = time.time()
@@ -60,18 +60,18 @@ def test_exceptions_raises():
         assert f.result()
 
 
-@pytest.mark.wip
 @pytest.mark.parametrize("EXECUTOR", [
     ProcessPoolExecutor(max_workers=16),
     ThreadPoolExecutor(max_workers=16),
-    ThreadedProcessPoolExecutor(max_processes=4, max_threads=4)])
+    ThreadedProcessPoolExecutor(max_processes=4, max_threads=4)
+])
 def test_all_futures_execute_in_parallel_if_possible(EXECUTOR):
     """
     If the number of tasks submitted to the executor is lower than the number
     of workers the executor has, all the tasks should run concurrently (given
     the task running time is not too short).
 
-    0....1....2....3....4....5....6....7....8....9
+    0....1....2....3....4....5....6....7
     # DO OVERLAP
          A-----------------B
            A----B

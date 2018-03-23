@@ -58,7 +58,7 @@ class _ThreadPoolExecutor(ThreadPoolExecutor):
             # Python3.4 and max_workers=None
             # Use this number because ThreadPoolExecutor is often
             # used to overlap I/O instead of CPU work.
-            self._max_workers = (os.cpu_count() or 1) * 5
+            self._max_workers = (multiprocessing.cpu_count() or 1) * 5
 
         self._available_thread = threading.Semaphore(self._max_workers)
 
@@ -139,17 +139,33 @@ class ThreadedProcessPoolExecutor(ProcessPoolExecutor):
             max_threads: The maximum number of thread per proces that can be
                 used to execute the given calls.
         """
-        self.max_processes = max_processes
-        self.max_threads = max_threads
+        if max_processes is None:
+            self._max_processes = multiprocessing.cpu_count() or 1
+        else:
+            if max_processes <= 0:
+                raise ValueError("max_processes must be greater than 0")
+            else:
+                self._max_processes = max_processes
+
+        if max_threads is None:
+            self._max_threads = (multiprocessing.cpu_count() or 1) * 5
+        else:
+            if max_threads <= 0:
+                raise ValueError("max_threads must be greater than 0")
+            else:
+                self._max_threads = max_threads
 
         super(ThreadedProcessPoolExecutor, self).__init__(
-            max_workers=self.max_processes)
+            max_workers=self._max_processes)
+
+        self._call_queue = multiprocessing.Queue(
+            (self._max_processes + 1) * self._max_threads)
 
     def _adjust_process_count(self):
         for _ in range(len(self._processes), self._max_workers):
             p = multiprocessing.Process(
                     target=_process_worker,
-                    args=(self.max_threads,
+                    args=(self._max_threads,
                           self._call_queue,
                           self._result_queue))
             p.start()
