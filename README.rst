@@ -19,8 +19,7 @@ pool of process with an inner pool of threads on each process to execute calls
 asynchronously.
 
 
-`ThreadedProcessPoolExecutor(max_processes=None, max_threads=None)`
--------------------------------------------------------------------
+*`ThreadedProcessPoolExecutor(max_processes=None, max_threads=None)`*
 
 An `Executor` subclass that is formed by a modified `ProcessPoolExecutor`
 that generates at most *max_processes* processes that use a
