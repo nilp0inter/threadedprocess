@@ -44,7 +44,6 @@ ThreadedProcessPoolExecutor Example
    from threadedprocess import ThreadedProcessPoolExecutor
    import requests
    
-   
    RNGURL = "https://www.random.org/integers/?num=1&min=1&max=100000000&col=1&base=10&format=plain&rnd=new"
    
    

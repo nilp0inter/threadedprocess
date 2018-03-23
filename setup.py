@@ -15,7 +15,7 @@ def read(fname):
 
 setup(
     name="threadedprocess",
-    version="0.0.3",
+    version="0.0.4",
     author="Roberto Abdelkader Martinez Perez",
     author_email="robertomartinezp@gmail.com",
     description=(
