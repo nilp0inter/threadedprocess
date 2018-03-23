@@ -25,7 +25,7 @@ setup(
     license="BSD",
     keywords="concurrent futures executor process thread",
     url="https://github.com/nilp0inter/threadedprocess",
-    modules=['threadedprocess'],
+    py_modules=['threadedprocess'],
     long_description=read('README.rst'),
     install_requires=[] if CONCURRENT_FUTURES_PRESENT else ["futures"],
     classifiers=[
