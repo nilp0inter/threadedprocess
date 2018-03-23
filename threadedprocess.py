@@ -5,17 +5,23 @@ that generates processes that use a `ThreadPoolExecutor` instance to run the
 given tasks.
 
 """
-__author__ = 'Roberto Abdelkader Martínez Pérez (robertomartinezp@gmail.com)'
+__author__ = 'Roberto Abdelkader Martinez Perez (robertomartinezp@gmail.com)'
 
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from concurrent.futures import _base
-from concurrent.futures.process import _ExceptionWithTraceback, _ResultItem
+from concurrent.futures.process import _ResultItem
 from concurrent.futures.thread import _shutdown, _threads_queues
 from functools import partial
 import multiprocessing
 import os
 import threading
 import weakref
+
+
+try:
+    from concurrent.futures.process import _ExceptionWithTraceback
+except ImportError:
+    _ExceptionWithTraceback = None
 
 
 def _worker(executor_reference, work_queue, available_thread):
@@ -48,6 +54,12 @@ def _worker(executor_reference, work_queue, available_thread):
 class _ThreadPoolExecutor(ThreadPoolExecutor):
     def __init__(self, max_workers=None):
         super(_ThreadPoolExecutor, self).__init__(max_workers)
+        if self._max_workers is None:
+            # Python3.4 and max_workers=None
+            # Use this number because ThreadPoolExecutor is often
+            # used to overlap I/O instead of CPU work.
+            self._max_workers = (os.cpu_count() or 1) * 5
+
         self._available_thread = threading.Semaphore(self._max_workers)
 
     def _adjust_thread_count(self):
@@ -74,8 +86,11 @@ def _return_result(call_item, result_queue, future):
     try:
         r = future.result()
     except BaseException as e:
-        exc = _ExceptionWithTraceback(e, e.__traceback__)
-        result_queue.put(_ResultItem(call_item.work_id, exception=exc))
+        if _ExceptionWithTraceback is None:
+            result_queue.put(_ResultItem(call_item.work_id, exception=e))
+        else:
+            exc = _ExceptionWithTraceback(e, e.__traceback__)
+            result_queue.put(_ResultItem(call_item.work_id, exception=exc))
     else:
         result_queue.put(_ResultItem(call_item.work_id, result=r))
 
@@ -138,4 +153,7 @@ class ThreadedProcessPoolExecutor(ProcessPoolExecutor):
                           self._call_queue,
                           self._result_queue))
             p.start()
-            self._processes[p.pid] = p
+            if isinstance(self._processes, dict):
+                self._processes[p.pid] = p
+            else:
+                self._processes.add(p)
